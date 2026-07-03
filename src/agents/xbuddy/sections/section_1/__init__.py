@@ -1,37 +1,24 @@
-"""Section 1 — TODO: rename this section.
-
-Reference: https://github.com/Victoria824/FounderBuddy/blob/main/src/agents/founder_buddy/sections/mission/__init__.py
-
-TODO: Define your SectionTemplate here with:
-  - section_id: SectionID.SECTION_1
-  - name: human-readable name
-  - description: what this section covers
-  - system_prompt_template: the prompt that guides the LLM in this section
-  - validation_rules: what fields are required
-  - required_fields: list of field names
-  - next_section: SectionID.SECTION_2 (or None for the last section)
-"""
+"""Section 1 — GOALS (the anchor section; everything else builds on this)."""
 
 from ...enums import SectionID
-from ..base_prompt import SectionTemplate
+from ..base_prompt import SectionTemplate, ValidationRule
 
 SECTION_1_TEMPLATE = SectionTemplate(
-    section_id=SectionID.SECTION_1,
-    name="Section 1",
-    description="TODO: describe what this section covers",
-    system_prompt_template="""
-TODO: Write the system prompt for this section.
-
-In this section, you need to gather:
-1. ...
-2. ...
-3. ...
-
-Guidelines:
-- Ask one question at a time
-- Once you have all elements, present a summary
-""",
-    validation_rules=[],
-    required_fields=[],
-    next_section=SectionID.SECTION_2,
+    section_id=SectionID.GOALS,
+    name="Goals",
+    description="What the user wants to achieve, their rough timeframe, and their motivation.",
+    system_prompt_template="""You are collecting the GOALS section — the foundation of the whole plan.
+Goal: understand what they want to achieve, roughly by when, and why.
+Cover: (1) primary goal, (2) rough timeline, (3) motivation.
+Offer concrete options so they can just pick (build muscle, lose fat, get generally fitter, or train for an event). If a goal is vague like "get in shape," gently narrow it. Don't push on the timeline — a rough sense is enough.""",
+    validation_rules=[
+        ValidationRule(
+            field_name="primary_goal",
+            rule_type="required",
+            value=True,
+            error_message="We need a primary goal before moving on.",
+        ),
+    ],
+    required_fields=["primary_goal"],
+    next_section=SectionID.PROFILE,
 )

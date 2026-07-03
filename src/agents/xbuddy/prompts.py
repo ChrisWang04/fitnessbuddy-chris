@@ -10,12 +10,28 @@ TODO: Implement:
 
 from .enums import SectionID
 from .sections.base_prompt import SectionTemplate
+from .sections.section_1 import SECTION_1_TEMPLATE
+from .sections.section_2 import SECTION_2_TEMPLATE
+from .sections.section_3 import SECTION_3_TEMPLATE
+from .sections.section_4 import SECTION_4_TEMPLATE
+from .sections.section_5 import SECTION_5_TEMPLATE
+
+# SectionID -> its SectionTemplate. This is the "section-template loader" registry.
+_SECTION_TEMPLATES: dict[SectionID, SectionTemplate] = {
+    SectionID.GOALS: SECTION_1_TEMPLATE,
+    SectionID.PROFILE: SECTION_2_TEMPLATE,
+    SectionID.SCHEDULE: SECTION_3_TEMPLATE,
+    SectionID.PREFERENCES: SECTION_4_TEMPLATE,
+    SectionID.NUTRITION: SECTION_5_TEMPLATE,
+}
 
 
 def get_section_template(section_id: SectionID) -> SectionTemplate:
     """Return the template for a given section."""
-    # TODO: Map each SectionID to its SectionTemplate
-    raise NotImplementedError("Implement section template mapping")
+    template = _SECTION_TEMPLATES.get(section_id)
+    if template is None:
+        raise ValueError(f"No SectionTemplate registered for {section_id}")
+    return template
 
 
 def get_next_section(current: SectionID) -> SectionID | None:

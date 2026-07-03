@@ -1,37 +1,17 @@
-"""Section 2 — TODO: rename this section.
-
-Reference: https://github.com/Victoria824/FounderBuddy/blob/main/src/agents/founder_buddy/sections/mission/__init__.py
-
-TODO: Define your SectionTemplate here with:
-  - section_id: SectionID.SECTION_2
-  - name: human-readable name
-  - description: what this section covers
-  - system_prompt_template: the prompt that guides the LLM in this section
-  - validation_rules: what fields are required
-  - required_fields: list of field names
-  - next_section: SectionID.SECTION_3 (or None for the last section)
-"""
+"""Section 2 — PROFILE (current physical starting point)."""
 
 from ...enums import SectionID
 from ..base_prompt import SectionTemplate
 
 SECTION_2_TEMPLATE = SectionTemplate(
-    section_id=SectionID.SECTION_2,
-    name="Section 2",
-    description="TODO: describe what this section covers",
-    system_prompt_template="""
-TODO: Write the system prompt for this section.
-
-In this section, you need to gather:
-1. ...
-2. ...
-3. ...
-
-Guidelines:
-- Ask one question at a time
-- Once you have all elements, present a summary
-""",
+    section_id=SectionID.PROFILE,
+    name="Profile",
+    description="The user's physical starting point: age, basic stats, injuries, training background.",
+    system_prompt_template="""You are collecting the PROFILE section.
+Goal: understand their physical starting point so the plan is safe and realistic.
+Cover: (1) age and basic stats (height, weight), (2) any injuries or physical limitations, (3) a light sense of training background (regular exerciser or starting fresh).
+Ask matter-of-factly. A rough range is fine if they'd rather not give exact numbers. Injuries matter most — make sure to catch those.""",
     validation_rules=[],
     required_fields=[],
-    next_section=SectionID.SECTION_3,
+    next_section=SectionID.SCHEDULE,
 )

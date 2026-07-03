@@ -1,37 +1,17 @@
-"""Section 4 — TODO: rename this section.
-
-Reference: https://github.com/Victoria824/FounderBuddy/blob/main/src/agents/founder_buddy/sections/mission/__init__.py
-
-TODO: Define your SectionTemplate here with:
-  - section_id: SectionID.SECTION_4
-  - name: human-readable name
-  - description: what this section covers
-  - system_prompt_template: the prompt that guides the LLM in this section
-  - validation_rules: what fields are required
-  - required_fields: list of field names
-  - next_section: SectionID.SECTION_5 (or None for the last section)
-"""
+"""Section 4 — PREFERENCES (what they enjoy, so they stick with it)."""
 
 from ...enums import SectionID
 from ..base_prompt import SectionTemplate
 
 SECTION_4_TEMPLATE = SectionTemplate(
-    section_id=SectionID.SECTION_4,
-    name="Section 4",
-    description="TODO: describe what this section covers",
-    system_prompt_template="""
-TODO: Write the system prompt for this section.
-
-In this section, you need to gather:
-1. ...
-2. ...
-3. ...
-
-Guidelines:
-- Ask one question at a time
-- Once you have all elements, present a summary
-""",
+    section_id=SectionID.PREFERENCES,
+    name="Preferences",
+    description="Training styles the user likes, things to avoid, and intensity preference.",
+    system_prompt_template="""You are collecting the PREFERENCES section.
+Goal: learn what they enjoy so they'll actually stick with it.
+Cover: (1) training styles they like (strength, HIIT, running, yoga, classes), (2) anything they dislike or want to avoid, (3) how hard they like to push (low / moderate / high).
+Offer examples so they can pick. It's fine if they have no strong preferences — note that and move on.""",
     validation_rules=[],
     required_fields=[],
-    next_section=SectionID.SECTION_5,
+    next_section=SectionID.NUTRITION,
 )
