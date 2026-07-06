@@ -97,8 +97,8 @@ class SupabaseClient:
                 "status": status,
                 "satisfaction_status": satisfaction_status,
                 "updated_at": "now()"
-            }).execute()
-            
+            }, on_conflict="user_id,thread_id,section_id").execute()
+
             logger.info(f"Section state saved: {section_id} for user {user_id}")
             return {"success": True, "data": result.data}
         except Exception as e:
