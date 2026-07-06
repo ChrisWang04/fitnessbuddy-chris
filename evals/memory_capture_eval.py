@@ -26,7 +26,7 @@ from agents.xbuddy.prompts import get_section_template
 from core.llm import get_model
 from core.models import AnthropicModelName
 
-DATASET_NAME = "fitnessbuddy-memory-capture"
+DATASET_NAME = "fitnessbuddy-memory-capture-v2"
 
 # Each example: a short section conversation + the facts a correct summary must keep.
 EXAMPLES = [
@@ -63,6 +63,19 @@ EXAMPLES = [
         },
         "outputs": {"facts": ["4 days/week", "~45 min sessions", "trains at home", "dumbbells + pull-up bar"]},
     },
+    {
+        # Regression case: conversation ENDS with the coach's reply (as it does in a real
+        # turn). This is the shape that made the summarizer return empty before the
+        # transcript fix — keep it here so we'd catch that bug again.
+        "inputs": {
+            "section": "goals",
+            "conversation": [
+                ["user", "I want to build upper-body muscle, chest and arms, over ~3 months for my wedding."],
+                ["assistant", "Love that! Chest and arms, back and shoulders, or a bit of everything up top?"],
+            ],
+        },
+        "outputs": {"facts": ["build upper-body muscle (chest/arms)", "~3 month timeline", "wedding motivation"]},
+    },
 ]
 
 
@@ -89,17 +102,28 @@ def _text(content) -> str:
     return content or ""
 
 
+def _format_transcript(history) -> str:
+    lines = []
+    for m in history:
+        who = "User" if isinstance(m, HumanMessage) else "Coach"
+        text = _text(m.content).strip()
+        if text:
+            lines.append(f"{who}: {text}")
+    return "\n".join(lines) if lines else "(no messages yet)"
+
+
 def summarize(section: SectionID, history) -> str:
-    """Sync mirror of memory_updater._summarize_section (so the eval stays simple)."""
+    """Sync mirror of memory_updater._summarize_section."""
     template = get_section_template(section)
     prompt = (
-        f"Summarize what the user has told us for the {template.name} section. "
-        f"This section covers: {template.description} "
-        f"Write a concise plain-text summary (1-3 sentences) of the information collected. "
+        f"Conversation so far for the {template.name} section:\n\n"
+        f"{_format_transcript(history)}\n\n"
+        f"This section covers: {template.description}\n"
+        f"Summarize what the USER has told us, in 1-3 concise plain-text sentences. "
         f"Use only what the user actually said. If little was provided, note what's still missing."
     )
     model = get_model(AnthropicModelName.HAIKU_45)
-    resp = model.invoke([SystemMessage(content=prompt), *history])
+    resp = model.invoke([HumanMessage(content=prompt)])
     return _text(resp.content).strip()
 
 

@@ -16,7 +16,7 @@ sections stay IN_PROGRESS until that judgement is made.
 
 import logging
 
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 
 from core.llm import get_model
@@ -44,21 +44,41 @@ def _as_section_id(value) -> SectionID:
         return list(SectionID)[0]
 
 
+def _text(content) -> str:
+    if isinstance(content, list):
+        return "".join(b.get("text", "") for b in content if isinstance(b, dict))
+    return content or ""
+
+
+def _format_transcript(history: list) -> str:
+    """Render the message history as a plain-text transcript for the summarizer."""
+    lines = []
+    for m in history:
+        who = "User" if isinstance(m, HumanMessage) else "Coach"
+        text = _text(m.content).strip()
+        if text:
+            lines.append(f"{who}: {text}")
+    return "\n".join(lines) if lines else "(no messages yet)"
+
+
 async def _summarize_section(section: SectionID, history: list, config: RunnableConfig) -> str:
-    """Concise plain-text summary of what the user gave for this section."""
+    """Concise plain-text summary of what the user gave for this section.
+
+    The conversation is passed as a transcript inside a single user message. Passing the
+    raw history (which can end with an assistant turn) makes Anthropic try to *continue*
+    that turn and return nothing — so we render it as text instead.
+    """
     template = get_section_template(section)
     prompt = (
-        f"Summarize what the user has told us for the {template.name} section. "
-        f"This section covers: {template.description} "
-        f"Write a concise plain-text summary (1-3 sentences) of the information collected. "
+        f"Conversation so far for the {template.name} section:\n\n"
+        f"{_format_transcript(history)}\n\n"
+        f"This section covers: {template.description}\n"
+        f"Summarize what the USER has told us, in 1-3 concise plain-text sentences. "
         f"Use only what the user actually said. If little was provided, note what's still missing."
     )
     model = get_model(AnthropicModelName.HAIKU_45)
-    resp = await model.ainvoke([SystemMessage(content=prompt), *history], config)
-    content = resp.content
-    if isinstance(content, list):
-        content = "".join(b.get("text", "") for b in content if isinstance(b, dict))
-    return (content or "").strip()
+    resp = await model.ainvoke([HumanMessage(content=prompt)], config)
+    return _text(resp.content).strip()
 
 
 def _persist_section(user_id: int, thread_id: str, state: SectionState) -> None:
@@ -94,14 +114,25 @@ async def memory_updater_node(state: XBuddyState, config: RunnableConfig) -> dic
     # Work on copies so we don't mutate the incoming state in place.
     section_states = {k: v.model_copy(deep=True) for k, v in state.get("section_states", {}).items()}
     history = state.get("messages", [])
-    user_id = state.get("user_id", 1)
     thread_id = state.get("thread_id", "")
+    # section_states.user_id is an INTEGER column; coerce so a str like "1" from the
+    # auth/config layer still persists instead of silently failing inside the try/except.
+    user_id_raw = state.get("user_id", 1)
+    try:
+        user_id = int(user_id_raw)
+    except (TypeError, ValueError):
+        logger.warning("memory_updater | user_id %r is not int-coercible", user_id_raw)
+        user_id = user_id_raw
 
     # 1. Save the current section's content if the decision said so (or we're advancing).
     if should_save or advancing:
         summary = await _summarize_section(current, history, config)
         cur = section_states.get(current.value) or SectionState(section_id=current)
-        cur.content = SectionContent(content={"text": summary}, plain_text=summary)
+        # Guard: never overwrite existing content with an empty summary.
+        if summary:
+            cur.content = SectionContent(content={"text": summary}, plain_text=summary)
+        else:
+            logger.warning("memory_updater | empty summary for %s — keeping prior content", current.value)
         cur.satisfaction_status = (
             "satisfied" if is_satisfied else "needs_improvement" if is_satisfied is False else None
         )
