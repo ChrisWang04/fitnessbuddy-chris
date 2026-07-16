@@ -44,8 +44,15 @@ Produce a structured decision:
 - user_satisfaction_feedback: a short note on their satisfaction, or null.
 - should_save_content: true once this section has enough content worth saving.
 
-Be conservative: default to "stay" when unsure. Do NOT advance just because a question was
-asked — only advance once the user has actually given the information this section needs."""
+When to advance (IMPORTANT — don't over-ask):
+- Set "next" once the section's ESSENTIAL info is captured. You do NOT need every minor detail;
+  a clear primary answer plus a rough sense of the rest is enough.
+- ALWAYS set "next" if the user explicitly asks to move on (e.g. "next", "move on",
+  "go to the next section", "that's all", "let's continue"), even if some details are still fuzzy.
+- Only set "stay" if a genuinely essential piece is still missing AND the user has not asked to move on.
+- Never re-ask for something the user already answered or clearly doesn't want to specify —
+  make a reasonable assumption and advance instead of stalling.
+- At most one or two clarifying questions per section; after that, capture what you have and move on."""
 
 
 def _extract_text(content) -> str:
