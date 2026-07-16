@@ -266,10 +266,11 @@ export default function ChatArea({
                 } else if (parsed.type === 'section') {
                   onSectionUpdate(parsed.content);
                 } else if (parsed.type === 'final_response') {
-                  // Handle final response if needed
-                  if (parsed.threadId && !threadId) {
-                    onThreadIdChange(parsed.threadId);
-                  }
+                  // Thread identity is owned solely by the 'metadata' event.
+                  // Do NOT set threadId here: final_response may carry a
+                  // per-request id, and the stale render-closure `threadId`
+                  // (still null within turn 1) would let it clobber the correct
+                  // thread_id, fragmenting the conversation across thread_ids.
                   if (parsed.section) {
                     onSectionUpdate(parsed.section);
                   }
